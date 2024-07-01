@@ -10,18 +10,18 @@ public_users.post("/register", (req,res) => {
   const password = req.body.password;
 
   if (!username) {
-    res.status(404).send("You did not enter a username!")
+    return res.status(404).send("You did not enter a username!")
   }
 
   if (!password) {
-    res.status(404).send("You did not enter a password!")
+    return res.status(400).send("You did not enter a password!")
   }
 
   const userExistsAlready = users.find(user => user.username === username);
 
   if (username && password) {
     if (userExistsAlready) {
-        res.status(400).send(`A user with a username of ${username} already exists!`)
+        return res.status(400).send(`A user with a username of ${username} already exists!`)
     } else {
         users.push({"username": username, "password": password});
         return res.send("You have successfully registered!")

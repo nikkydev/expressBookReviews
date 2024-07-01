@@ -11,19 +11,74 @@ const isValid = (username)=>{ //returns boolean
 
 const authenticatedUser = (username,password)=>{ //returns boolean
 //write code to check if username and password match the one we have in records.
+    let validUser = users.filter(user => {
+        return users.find(user => user.username === username && user.password === password);
+    });
 }
 
 //only registered users can login
 regd_users.post("/login", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    const username = req.body.username;
+    const password = req.body.password;
+
+    if (!username || !password) {
+        return res.status(404).send("You obviously cannot follow instructions! Either your username or password are missing.")
+    } 
+
+    if (authenticatedUser(username,password)) {
+        // Generate JWT access token
+        let accessToken = jwt.sign({
+            data: password
+        }, 'access', { expiresIn: 60 * 60 });
+
+        // Store access token and username in session
+        req.session.authorization = {
+            accessToken, username
+        }
+        return res.status(200).send("User successfully logged in!");
+    } else {
+        return res.status(208).send(`Uh oh, it appears you are not registered yet. Please register before trying to login.`)
+    }
 });
 
-// Add a book review
+// Add or update a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  const isbn = req.params.isbn;
+  const review = req.body.review;
+  const session = req.session.authorization;
+
+  // No session, they can't add review
+  if (!session) {
+    return res.status(403).send("Oh huh uh, you don't have permission to enter a review. Please login or register.");
+  }
+
+  const reviewerName = session.username;
+
+  // Check if review is entered 
+  if (!review) {
+    return res.status(400).send("Doh, you forgot to add a review!");
+  }
+
+  // Check if the book exists
+  if (!books[isbn]) {
+    return res.status(404).send("There is no book with that ISBN number in our database.");
+  }
+
+  // Initialize reviews as an object if it doesn't exist
+  if (!books[isbn].reviews) {
+    books[isbn].reviews = {};
+  }
+
+  // Add or update the review
+  const isUpdate = books[isbn].reviews.hasOwnProperty(reviewerName);
+  books[isbn].reviews[reviewerName] = review;
+
+  // Respond with the appropriate message
+  const responseMessage = isUpdate ? "Your review has been updated." : "Your review has been added.";
+
+  return res.status(200).send(responseMessage);
 });
+
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
