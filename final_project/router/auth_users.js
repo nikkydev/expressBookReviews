@@ -11,9 +11,9 @@ const isValid = (username)=>{ //returns boolean
 
 const authenticatedUser = (username,password)=>{ //returns boolean
 //write code to check if username and password match the one we have in records.
-    let validUser = users.filter(user => {
-        return users.find(user => user.username === username && user.password === password);
-    });
+    const validUser = users.find(user => user.username === username && user.password === password);
+    return !!validUser;
+
 }
 
 //only registered users can login
@@ -77,6 +77,31 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   const responseMessage = isUpdate ? "Your review has been updated." : "Your review has been added.";
 
   return res.status(200).send(responseMessage);
+});
+
+regd_users.delete("/auth/review/:isbn", (req,res) => {
+    const isbn = req.params.isbn;
+    const session = req.session.authorization;
+
+    // No session, they can't delete review
+    if (!session) {
+        return res.status(403).send("Oh huh uh, you don't have permission to delete a review. Please login or register.");
+    }
+
+    const reviewerName = session.username;
+
+    // Check if the book exists
+    if (!books[isbn]) {
+        return res.status(404).send("There is no book with that ISBN number in our database.");
+    }
+
+    // Check if a review exists by user on that book
+    if (books[isbn].reviews.hasOwnProperty(reviewerName)) {
+        delete books[isbn].reviews[reviewerName];
+        return res.status(200).send("Your book has been deleted.")
+    } else {
+        return res.status(404).send("You did not write a review for that book.")
+    }
 });
 
 
