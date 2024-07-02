@@ -98,7 +98,7 @@ regd_users.delete("/auth/review/:isbn", (req,res) => {
     // Check if a review exists by user on that book
     if (books[isbn].reviews.hasOwnProperty(reviewerName)) {
         delete books[isbn].reviews[reviewerName];
-        return res.status(200).send("Your book has been deleted.")
+        return res.status(200).send("Your review has been deleted.")
     } else {
         return res.status(404).send("You did not write a review for that book.")
     }
